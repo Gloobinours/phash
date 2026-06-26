@@ -3,6 +3,9 @@
 
 #include "image.h"
 
+int
+load_phash_tables(const char* filepath);
+
 uint64_t
 phash(const Image* image);
 
@@ -11,9 +14,6 @@ resize_32x32(const Image* image, float out[32][32]);
 
 void
 dct32(float in[32][32], float out[32][32]);
-
-int
-compare_float(const void* a, const void* b);
 
 uint64_t
 phash_from_dct(const float dct[32][32]);
