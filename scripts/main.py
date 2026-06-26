@@ -3,14 +3,17 @@ import cv2
 import time
 import ctypes
 import numpy as np
+from picamera2 import Picamera2
+
 
 class C_Image(ctypes.Structure):
     _fields_ = [
         ("width", ctypes.c_int32),
         ("height", ctypes.c_int32),
         ("channels", ctypes.c_int32),
-        ("pixels", ctypes.POINTER(ctypes.c_uint8))
+        ("pixels", ctypes.POINTER(ctypes.c_uint8)),
     ]
+
 
 # Files
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -26,24 +29,20 @@ lib.phash.argtypes = [ctypes.POINTER(C_Image)]
 lib.phash.restype = ctypes.c_uint64
 
 # Load the dct LUT
-if not lib.load_phash_tables(LUT_PATH.encode('utf-8')):
+if not lib.load_phash_tables(LUT_PATH.encode("utf-8")):
     raise RuntimeError(f"C library failed to parse required LUT asset at: {LUT_PATH}")
+
 
 def do_phash(image):
     start_time = time.perf_counter()
 
     height, width = image.shape
 
-    image_contiguous = np.ascontiguousarray(img, dtype=np.uint8)
+    image_contiguous = np.ascontiguousarray(image, dtype=np.uint8)
 
-    pixel_ptr = img_contiguous.ctypes.data_as(ctypes.POINTER(ctypes.c_uint8))
+    pixel_ptr = image_contiguous.ctypes.data_as(ctypes.POINTER(ctypes.c_uint8))
 
-    c_image_instance = C_Image(
-        width=width,
-        height=height,
-        channels=1,
-        pixels=pixel_ptr
-    )
+    c_image_instance = C_Image(width=width, height=height, channels=1, pixels=pixel_ptr)
 
     print(f"Image size: {width}x{height}")
 
@@ -57,28 +56,25 @@ def do_phash(image):
 
     return hash
 
+
 def start():
+    # App time debugging init
+    app_start_time = time.time()
+    frame_count = 0
+    average_frame_time = 0.0
+
     # Initialize Picamera2 object for IMX296
     picam = Picamera2()
 
     # Configure output format
     config = picam.create_video_configuration(
-        main={"size": (1456, 1088), "format": "RGB888"} # Use BGR888 or YUV420 if preferred
+        main={
+            "size": (1456, 1088),
+            "format": "RGB888",
+        }  # Use BGR888 or YUV420 if preferred
     )
     picam.configure(config)
     picam.start()
-
-    # Load lens calibration produced by calibrate.py, if available
-    frame_w, frame_h = config["main"]["size"]
-    try:
-        camera_matrix, dist_coeffs = load_calibration()
-        new_camera_matrix, _ = cv2.getOptimalNewCameraMatrix(
-            camera_matrix, dist_coeffs, (frame_w, frame_h), 1, (frame_w, frame_h)
-        )
-        print(f"Loaded lens calibration from {CALIBRATION_FILE}.")
-    except FileNotFoundError:
-        camera_matrix = dist_coeffs = new_camera_matrix = None
-        print(f"No {CALIBRATION_FILE} found - run calibrate.py to enable undistortion.")
 
     print("Live stream started. Press 'q' to quit.")
 
@@ -89,7 +85,11 @@ def start():
             # Capture the current frame
             frame = picam.capture_array()
 
-            grayscale_img = frame[0:int(height * 2 / 3), :, 0] if len(frame.shape) == 3 else frame
+            height, width = frame.shape
+
+            grayscale_img = (
+                frame[0 : int(height * 2 / 3), :, 0] if len(frame.shape) == 3 else frame
+            )
             do_phash(grayscale_img)
 
             # Display the image in an OpenCV window
@@ -109,12 +109,20 @@ def start():
             )
 
             # Wait 1ms for the 'q' key to be pressed
-            if cv2.waitKey(1) & 0xFF == ord('q'):
+            if cv2.waitKey(1) & 0xFF == ord("q"):
                 break
     finally:
         # Clean up resources
         picam.stop()
         cv2.destroyAllWindows()
+
+    app_end_time = time.time()
+    app_execution_time = app_end_time - app_start_time
+    print()
+    print(f"Total execution time: {app_execution_time} seconds")
+    if frame_count:
+        print(f"Avg frame time: {average_frame_time} seconds")
+
 
 if __name__ == "__main__":
     start()
