@@ -85,9 +85,12 @@ def start():
     try:
         while True:
             frame_start_time = time.time()
-            
+
             # Capture the current frame
             frame = picam.capture_array()
+
+            grayscale_img = frame[0:int(height * 2 / 3), :, 0] if len(frame.shape) == 3 else frame
+            do_phash(grayscale_img)
 
             # Display the image in an OpenCV window
             cv2.imshow("IMX296 Live Feed", frame)
@@ -112,3 +115,6 @@ def start():
         # Clean up resources
         picam.stop()
         cv2.destroyAllWindows()
+
+if __name__ == "__main__":
+    start()
