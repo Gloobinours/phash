@@ -74,7 +74,19 @@ def start():
         }  # Use BGR888 or YUV420 if preferred
     )
     picam.configure(config)
+    picam.set_controls({
+    "AnalogueGain": 1.0,
+    "ExposureTime": 25000,
+    # Disable auto-exposure and auto-white balance for consistent captures
+    "AeEnable": False,
+    "AwbEnable": False,
+    "ColourGains": (2.5, 2.5),   # (red, blue) gain relative to green (2x green sensitivity)
+    "Saturation": 1.0,
+    "Contrast": 0.5,
+    "Brightness": 0.0,
+    })
     picam.start()
+    frame_w, frame_h = config["main"]["size"]
 
     print("Live stream started. Press 'q' to quit.")
 
@@ -85,9 +97,10 @@ def start():
             # Capture the current frame
             frame = picam.capture_array()
 
-            height, width, _ = frame.shape
+            # height, width, _ = frame.shape
 
-            grayscale_img = frame[0 : int(height * 2 / 3), :]
+            # grayscale_img = frame[0 : int(height * 2 / 3), :]
+            grayscale_img = frame[:frame_h, :frame_w]
 
             # grayscale_img = (
             #     frame[0 : int(height * 2 / 3), :, 0] if len(frame.shape) == 3 else frame
