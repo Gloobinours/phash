@@ -59,7 +59,7 @@ def do_phash(image):
 
 def start():
     # App time debugging init
-    app_start_time = time.time()
+    app_start_time = time.perf_counter()
     frame_count = 0
     average_frame_time = 0.0
 
@@ -80,16 +80,18 @@ def start():
 
     try:
         while True:
-            frame_start_time = time.time()
+            frame_start_time = time.perf_counter()
 
             # Capture the current frame
             frame = picam.capture_array()
 
             height, width, _ = frame.shape
 
-            grayscale_img = (
-                frame[0 : int(height * 2 / 3), :, 0] if len(frame.shape) == 3 else frame
-            )
+            grayscale_img = frame[0 : int(height * 2 / 3), :]
+
+            # grayscale_img = (
+            #     frame[0 : int(height * 2 / 3), :, 0] if len(frame.shape) == 3 else frame
+            # )
 
             do_phash(grayscale_img)
 
@@ -97,7 +99,7 @@ def start():
             cv2.imshow("IMX296 Live Feed", frame)
 
             # Update a constant-memory running average of frame time
-            frame_end_time = time.time()
+            frame_end_time = time.perf_counter()
             frame_time = frame_end_time - frame_start_time
             frame_count += 1
             average_frame_time += (frame_time - average_frame_time) / frame_count
@@ -117,7 +119,7 @@ def start():
         picam.stop()
         cv2.destroyAllWindows()
 
-    app_end_time = time.time()
+    app_end_time = time.perf_counter()
     app_execution_time = app_end_time - app_start_time
     print()
     print(f"Total execution time: {app_execution_time} seconds")
