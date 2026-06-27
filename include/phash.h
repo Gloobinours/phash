@@ -3,6 +3,9 @@
 
 #include "image.h"
 
+int
+load_phash_tables(const char* filepath);
+
 uint64_t
 phash(const Image* image);
 

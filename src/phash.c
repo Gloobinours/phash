@@ -7,7 +7,7 @@
 static float DCT_LUT[32][32];
 static int lut_initialized = 0;
 
-static int
+int
 load_phash_tables(const char* filepath)
 {
   if (lut_initialized)
