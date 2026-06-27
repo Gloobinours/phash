@@ -36,7 +36,7 @@ if not lib.load_phash_tables(LUT_PATH.encode("utf-8")):
 def do_phash(image):
     start_time = time.perf_counter()
 
-    height, width = image.shape
+    height, width, _ = image.shape
 
     image_contiguous = np.ascontiguousarray(image, dtype=np.uint8)
 
@@ -107,8 +107,8 @@ def start():
 
             # height, width, _ = frame.shape
 
-            # grayscale_img = frame[0 : int(height * 2 / 3), :]
-            grayscale_img = frame[:frame_h, :frame_w]
+            grayscale_img = frame[0 : int(frame_h * 2 / 3), :]
+            # grayscale_img = frame[:frame_h, :frame_w]
 
             # grayscale_img = (
             #     frame[0 : int(height * 2 / 3), :, 0] if len(frame.shape) == 3 else frame
