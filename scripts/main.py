@@ -58,11 +58,6 @@ def do_phash(image):
 
 
 def start():
-    # App time debugging init
-    app_start_time = time.perf_counter()
-    frame_count = 0
-    average_frame_time = 0.0
-
     # Initialize Picamera2 object for IMX296
     picam = Picamera2()
 
@@ -97,6 +92,11 @@ def start():
     frame_w, frame_h = config["main"]["size"]
 
     print("Live stream started. Press 'q' to quit.")
+
+    # App time debugging init
+    app_start_time = time.perf_counter()
+    frame_count = 0
+    average_frame_time = 0.0
 
     try:
         while True:
@@ -142,8 +142,8 @@ def start():
 
     app_end_time = time.perf_counter()
     app_execution_time = app_end_time - app_start_time
-    print()
-    print(f"Total execution time: {app_execution_time} seconds")
+    print(f"\nTotal execution time: {app_execution_time} seconds")
+
     if frame_count:
         print(f"Avg frame time: {average_frame_time} seconds")
 

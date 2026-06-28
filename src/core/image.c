@@ -1,4 +1,5 @@
-#include "../include/image.h"
+#include "../../include/core/image.h"
+#include "../../include/core/errors.h"
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -8,11 +9,13 @@
 Image
 load_jpeg(const char* filename, ColorMode colorMode)
 {
+  LOG_INFO("Loading JPEG image %s", filename);
+
   Image image = { 0, 0, 0, NULL };
 
   FILE* file = fopen(filename, "rb");
   if (file == NULL) {
-    fprintf(stderr, "Error: can't open %s\n", filename);
+    LOG_ERROR("Can't open image because the filename pointer is null.");
     return image;
   }
 
@@ -39,7 +42,7 @@ load_jpeg(const char* filename, ColorMode colorMode)
                                      &height,
                                      &subsampling);
   if (res != 0) {
-    fprintf(stderr, "Decompression failed: %s\n", tjGetErrorStr());
+    LOG_ERROR("Decompression failed: %s", tjGetErrorStr());
     free(jpeg_buffer);
     tjDestroy(decompressor);
     return image;
@@ -62,12 +65,20 @@ load_jpeg(const char* filename, ColorMode colorMode)
       break;
   }
 
-  // This can proly overflow for big images
+  if (image.width <= 0 || image.height <= 0 || image.width > 16384 ||
+      image.height > 16384) { // Set a reasonable maximum threshold
+    LOG_ERROR("Image dimensions have to be <= 0 and > 16384 pixels.");
+    free(jpeg_buffer);
+    tjDestroy(decompressor);
+    return image;
+  }
+
   size_t buffer_size = (size_t)(image.width * image.height * image.channels);
 
   image.pixels = (uint8_t*)malloc(buffer_size);
 
   if (!image.pixels) {
+    LOG_ERROR("TurboJPEG engine didn't initialize properly.");
     free(jpeg_buffer);
     tjDestroy(decompressor);
     return image;
@@ -97,6 +108,8 @@ load_jpeg(const char* filename, ColorMode colorMode)
 int32_t
 write_jpeg(const char* filename, const Image* image, int32_t quality)
 {
+  LOG_INFO("Writing JPEG file: %s", filename);
+
   if (!image || !image->pixels || image->width == 0 || image->height == 0) {
     return EXIT_FAILURE;
   }

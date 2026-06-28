@@ -1,5 +1,6 @@
-#include "../include/phash.h"
-#include "../include/utils.h"
+#include "../../include/core/phash.h"
+#include "../../include/core/errors.h"
+#include "../../include/utils/utils.h"
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -15,7 +16,7 @@ load_phash_tables(const char* filepath)
 
   FILE* file = fopen(filepath, "rb");
   if (!file) {
-    fprintf(stderr, "Critical Error: Could not open %s\n", filepath);
+    LOG_ERROR("Could not open %s", filepath);
     return 0;
   }
 
@@ -23,8 +24,7 @@ load_phash_tables(const char* filepath)
   fclose(file);
 
   if (elements_read != 32 * 32) {
-    fprintf(stderr,
-            "Critical Error: Corrupt or incomplete bin file structure.\n");
+    LOG_ERROR("Corrupt or incomplete bin file structure.");
     return 0;
   }
 
@@ -68,7 +68,7 @@ void
 resize_32x32(const Image* image, float out[32][32])
 {
   if (image->channels != 1) {
-    fprintf(stderr, "Error: image provided is not BNW\n");
+    LOG_ERROR("image provided is not BNW");
     return;
   }
 
@@ -127,9 +127,11 @@ phash_from_dct(const float dct[32][32])
 uint64_t
 phash(const Image* image)
 {
+  LOG_INFO("Executing phash.");
+
   if (!lut_initialized) {
-    if (!load_phash_tables("dct_lut.bin")) {
-      fprintf(stderr, "Application halting due to missing LUT assets.\n");
+    if (!load_phash_tables("bin/dct_lut.bin")) {
+      LOG_ERROR("Application halting due to missing LUT assets.");
       exit(EXIT_FAILURE);
     }
   }
