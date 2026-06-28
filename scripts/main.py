@@ -36,7 +36,7 @@ if not lib.load_phash_tables(LUT_PATH.encode("utf-8")):
 def do_phash(image):
     start_time = time.perf_counter()
 
-    height, width, _ = image.shape
+    height, width = image.shape
 
     image_contiguous = np.ascontiguousarray(image, dtype=np.uint8)
 
@@ -65,7 +65,7 @@ def start():
     config = picam.create_video_configuration(
         main={
             "size": (1456, 1088),
-            "format": "RGB888",
+            "format": "YUV420",
         }  # Use BGR888 or YUV420 if preferred
     )
     picam.configure(config)
@@ -107,8 +107,8 @@ def start():
 
             # height, width, _ = frame.shape
 
-            grayscale_img = frame[0 : int(frame_h * 2 / 3), :]
-            # grayscale_img = frame[:frame_h, :frame_w]
+            # grayscale_img = frame[0 : int(frame_h * 2 / 3), :]
+            grayscale_img = frame[:frame_h, :frame_w]
 
             # grayscale_img = (
             #     frame[0 : int(height * 2 / 3), :, 0] if len(frame.shape) == 3 else frame
@@ -117,7 +117,7 @@ def start():
             do_phash(grayscale_img)
 
             # Display the image in an OpenCV window
-            cv2.imshow("IMX296 Live Feed", frame)
+            cv2.imshow("IMX296 Live Feed", grayscale_img)
 
             # Update a constant-memory running average of frame time
             frame_end_time = time.perf_counter()
